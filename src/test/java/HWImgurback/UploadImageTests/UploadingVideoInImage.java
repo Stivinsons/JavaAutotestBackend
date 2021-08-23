@@ -2,11 +2,13 @@ package HWImgurback.UploadImageTests;
 
 import HWImgurBack.BaseTestImageNegative;
 import io.qameta.allure.Feature;
+import io.restassured.builder.MultiPartSpecBuilder;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
 
 public class UploadingVideoInImage extends BaseTestImageNegative {
 
@@ -14,18 +16,30 @@ public class UploadingVideoInImage extends BaseTestImageNegative {
     @DisplayName("Загрузка видео через изображение")
     @Feature("Negative test: Upload video")
     void uploadVideoTest() {
+
+        requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", token)
+                .build();
+
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(400)
+                .expectStatusLine("HTTP/1.1 400 Bad Request")
+                .build();
+
+        multiPartSpec = new MultiPartSpecBuilder(Video)
+                .controlName("image")
+                .build();
+
+        requestSpecification = requestSpecification
+                .multiPart(multiPartSpec);
+
         given()
-                .headers("Authorization", token)
-                .multiPart("image", Video)
-                .expect()
-                .body("success", is(false))
-                .body("data.error.code", is(1003))
-                .body("data.error.message", is("File type invalid (1)"))
+                .spec(requestSpecification)
                 .when()
-                .post("https://api.imgur.com/3/image/")
+                .post(POST_IMAGE)
                 .prettyPeek()
                 .then()
-                .statusCode(400);
+                .spec(responseSpecification);
     }
 
 

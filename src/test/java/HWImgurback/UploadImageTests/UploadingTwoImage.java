@@ -1,13 +1,13 @@
 package HWImgurback.UploadImageTests;
 
 import HWImgurBack.BaseTestImage;
+import HWImgurBack.UploadImageResponePositive;
 import io.qameta.allure.Feature;
+import io.restassured.builder.RequestSpecBuilder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
 
 public class UploadingTwoImage extends BaseTestImage {
 
@@ -15,20 +15,24 @@ public class UploadingTwoImage extends BaseTestImage {
     @DisplayName("Загрузка двух изображений")
     @Feature("Positive test: Upload two images")
     void uploadTwoImageTest() {
-        properties.setProperty("deleteHash" , given()
-                .headers("Authorization", token)
-                .multiPart("image", imageJpg)
-                .multiPart("image", imageJpeg)
-                .expect()
-                .body("success", is(true))
-                .body("data.id", is(notNullValue()))
+
+        requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", token)
+                .addMultiPart("image", imageJpeg)
+                .addMultiPart("image", imageJpg)
+                .build();
+
+        uploadImageResponsePositive = given()
+                .spec(requestSpecification)
                 .when()
-                .post("https://api.imgur.com/3/image/")
+                .post(POST_IMAGE)
                 .prettyPeek()
                 .then()
+                .spec(responseSpecification)
                 .extract()
-                .response()
-                .jsonPath()
-                .getString("data.deletehash"));
+                .body()
+                .as(UploadImageResponePositive.class);
+
+        properties.setProperty("deleteHash", uploadImageResponsePositive.getData().getDeletehash());
     }
 }

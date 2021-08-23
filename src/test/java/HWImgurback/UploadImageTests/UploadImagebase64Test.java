@@ -1,34 +1,39 @@
 package HWImgurback.UploadImageTests;
 
 import HWImgurBack.BaseTestImage;
+import HWImgurBack.UploadImageResponePositive;
 import io.qameta.allure.Feature;
+import io.restassured.builder.MultiPartSpecBuilder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
-import static org.hamcrest.Matchers.notNullValue;
-
 
 public class UploadImagebase64Test extends BaseTestImage {
 
     @Test
     @DisplayName("Загрузка изображения в формате base64")
-    @Feature("Positive test: Upload image.base63")
+    @Feature("Positive test: Upload image.base64")
     void uploadImageBase64Test() {
-        properties.setProperty("deleteHash" , given()
-                .headers("Authorization", token)
-                .multiPart("image", encodedFile)
-                .expect()
-                .body("success", is(true))
-                .body("data.id", is(notNullValue()))
+
+        multiPartSpec = new MultiPartSpecBuilder(encodedFile)
+                .controlName("image")
+                .build();
+
+        requestSpecification = requestSpecification
+                .multiPart(multiPartSpec);
+
+        uploadImageResponsePositive = given()
+                .spec(requestSpecification)
                 .when()
-                .post("https://api.imgur.com/3/image/")
+                .post(POST_IMAGE)
                 .prettyPeek()
                 .then()
+                .spec(responseSpecification)
                 .extract()
-                .response()
-                .jsonPath()
-                .getString("data.deletehash"));
+                .body()
+                .as(UploadImageResponePositive.class);
+
+        properties.setProperty("deleteHash", uploadImageResponsePositive.getData().getDeletehash());
     }
 }

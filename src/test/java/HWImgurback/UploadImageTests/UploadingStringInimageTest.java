@@ -2,11 +2,13 @@ package HWImgurback.UploadImageTests;
 
 import HWImgurBack.BaseTestImageNegative;
 import io.qameta.allure.Feature;
+import io.restassured.builder.MultiPartSpecBuilder;
+import io.restassured.builder.RequestSpecBuilder;
+import io.restassured.builder.ResponseSpecBuilder;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 import static io.restassured.RestAssured.given;
-import static org.hamcrest.Matchers.is;
 
 public class UploadingStringInimageTest extends BaseTestImageNegative {
 
@@ -14,15 +16,29 @@ public class UploadingStringInimageTest extends BaseTestImageNegative {
     @DisplayName("Загрузка строки через изображение")
     @Feature("Negative test: Upload String")
     void uploadStringTest() {
+
+        requestSpecification = new RequestSpecBuilder()
+                .addHeader("Authorization", token)
+                .build();
+
+        responseSpecification = new ResponseSpecBuilder()
+                .expectStatusCode(400)
+                .expectStatusLine("HTTP/1.1 400 Bad Request")
+                .build();
+
+        multiPartSpec = new MultiPartSpecBuilder(testingString)
+                .controlName("image")
+                .build();
+
+        requestSpecification = requestSpecification
+                .multiPart(multiPartSpec);
+
         given()
-                .headers("Authorization", token)
-                .multiPart("image", "тестовая строка")
-                .expect()
-                .body("success", is(false))
+                .spec(requestSpecification)
                 .when()
-                .post("https://api.imgur.com/3/image/")
+                .post(POST_IMAGE)
                 .prettyPeek()
                 .then()
-                .statusCode(400);
+                .spec(responseSpecification);
     }
 }
